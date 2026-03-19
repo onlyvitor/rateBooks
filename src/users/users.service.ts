@@ -22,11 +22,15 @@ export class UsersService {
   }
 
   async findAll() {
-    return await this.userRepository.find();
+    return { success: true, data: await this.userRepository.find() };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOne(id: number) {
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new BadRequestException({ success: false, message: 'User not found' });
+    }
+    return { success: true, data: user };
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {
