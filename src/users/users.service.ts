@@ -33,8 +33,12 @@ export class UsersService {
     return { success: true, data: user };
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new BadRequestException({ success: false, message: 'User not found' });
+    }
+    return { success: true, data: await this.userRepository.update(id, updateUserDto) };
   }
 
   remove(id: number) {
