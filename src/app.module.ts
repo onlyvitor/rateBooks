@@ -5,6 +5,7 @@ import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import dotenv from 'dotenv';
 import { User } from './users/entities/user.entity';
+import { AuthModule } from './auth/auth.module';
 
 dotenv.config();
 
@@ -18,7 +19,7 @@ dotenv.config();
     database: process.env.DB_NAME,
     entities: [User],
     synchronize: true,
-  })],
+  }), AuthModule],
   controllers: [AppController],
   providers: [AppService],
 })
