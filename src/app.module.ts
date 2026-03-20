@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import dotenv from 'dotenv';
 import { User } from './users/entities/user.entity';
 import { AuthModule } from './auth/auth.module';
+import { RatingModule } from './rating/rating.module';
 
 dotenv.config();
 
@@ -19,7 +20,7 @@ dotenv.config();
     database: process.env.DB_NAME,
     entities: [User],
     synchronize: true,
-  }), AuthModule],
+  }), AuthModule, RatingModule],
   controllers: [AppController],
   providers: [AppService],
 })
