@@ -1,4 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Rating } from "src/rating/entities/rating.entity";
+import { OneToMany } from "typeorm";
 
 @Entity()
 export class User {
@@ -16,4 +18,7 @@ export class User {
 
     @Column({ default: false })
     isAdmin: boolean;
+
+    @OneToMany(() => Rating, (rating) => rating.user)
+    ratings: Rating[];
 }

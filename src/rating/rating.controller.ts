@@ -1,11 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { RatingService } from './rating.service';
 import { CreateRatingDto } from './dto/create-rating.dto';
 import { UpdateRatingDto } from './dto/update-rating.dto';
 
 @Controller('rating')
 export class RatingController {
-  constructor(private readonly ratingService: RatingService) {}
+  constructor(private readonly ratingService: RatingService) { }
 
   @Post()
   create(@Body() createRatingDto: CreateRatingDto) {
@@ -13,8 +13,8 @@ export class RatingController {
   }
 
   @Get()
-  findAll() {
-    return this.ratingService.findAll();
+  findAll(@Query('googleBookId') googleBookId?: string) {
+    return this.ratingService.findAll(googleBookId);
   }
 
   @Get(':id')

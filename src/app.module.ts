@@ -7,6 +7,8 @@ import dotenv from 'dotenv';
 import { User } from './users/entities/user.entity';
 import { AuthModule } from './auth/auth.module';
 import { RatingModule } from './rating/rating.module';
+import { BooksModule } from './books/books.module';
+import { Rating } from './rating/entities/rating.entity';
 
 dotenv.config();
 
@@ -18,9 +20,9 @@ dotenv.config();
     username: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    entities: [User],
+    entities: [User, Rating],
     synchronize: true,
-  }), AuthModule, RatingModule],
+  }), AuthModule, RatingModule, BooksModule],
   controllers: [AppController],
   providers: [AppService],
 })
