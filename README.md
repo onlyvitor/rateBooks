@@ -1,98 +1,207 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# RateBooks — Book Rating API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A REST API for rating books, integrated with the **Google Books API**. Authenticated users can search for books and log their reviews with a score, comment, and reading status.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Stack
 
-## Description
+- **[NestJS](https://nestjs.com/)** — Node.js framework
+- **[TypeORM](https://typeorm.io/)** + **PostgreSQL** — data persistence
+- **[JWT](https://jwt.io/)** — authentication via access/refresh tokens
+- **[Google Books API](https://developers.google.com/books)** — external book data integration
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+---
 
-## Project setup
+## Installation and setup
+
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL running locally
+
+### 1. Clone and install dependencies
 
 ```bash
-$ npm install
+git clone <repo-url>
+cd rate-everithing
+npm install
 ```
 
-## Compile and run the project
+### 2. Configure environment variables
+
+Create a `.env` file in the project root:
+
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=your_user
+DB_PASSWORD=your_password
+DB_NAME=rate_everithing
+
+JWT_SECRET=your_secret_key
+```
+
+### 3. Run
 
 ```bash
-# development
-$ npm run start
+# Development (with hot reload)
+npm run start:dev
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+# Production
+npm run start:prod
 ```
 
-## Run tests
+The API will be available at `http://localhost:3000/api`.
+
+---
+
+## Endpoints
+
+### Authentication (`/api/auth`)
+
+| Method | Route | Auth Required | Description |
+|--------|-------|---------------|-------------|
+| `POST` | `/api/auth/login` | No | Login with email and password |
+| `POST` | `/api/auth/refresh` | No | Refresh access token using a refresh token |
+| `GET`  | `/api/auth/profile` | Yes | Get the logged-in user's data |
+
+**Example — Login:**
+```json
+POST /api/auth/login
+{
+  "email": "user@email.com",
+  "password": "password123"
+}
+```
+
+---
+
+### Users (`/api/users`)
+
+| Method | Route | Auth Required | Description |
+|--------|-------|---------------|-------------|
+| `POST`   | `/api/users`     | No  | Register a new user |
+| `GET`    | `/api/users`     | Yes | List all users |
+| `GET`    | `/api/users/:id` | Yes | Get a user by ID |
+| `PATCH`  | `/api/users/:id` | Yes | Update a user |
+| `DELETE` | `/api/users/:id` | Yes | Delete a user |
+
+**Example — Register a user:**
+```json
+POST /api/users
+{
+  "name": "John",
+  "email": "john@email.com",
+  "password": "password123"
+}
+```
+
+---
+
+### Books (`/api/books`)
+
+Proxy endpoints for the Google Books API.
+
+| Method | Route | Auth Required | Description |
+|--------|-------|---------------|-------------|
+| `GET` | `/api/books/search?q=query` | Yes | Search books by title or author |
+| `GET` | `/api/books/:googleBookId`  | Yes | Get details of a specific book |
+
+**Example — Search books:**
+```
+GET /api/books/search?q=Harry+Potter
+```
+
+**Response:**
+```json
+[
+  {
+    "id": "zyTCAlFPjgYC",
+    "title": "Harry Potter and the Philosopher's Stone",
+    "authors": ["J.K. Rowling"],
+    "description": "...",
+    "thumbnail": "https://...",
+    "publishedDate": "1997-06-26",
+    "pageCount": 223
+  }
+]
+```
+
+---
+
+### Ratings (`/api/rating`)
+
+| Method | Route | Auth Required | Description |
+|--------|-------|---------------|-------------|
+| `POST`   | `/api/rating`                    | Yes | Create a rating |
+| `GET`    | `/api/rating`                    | Yes | List all ratings |
+| `GET`    | `/api/rating?googleBookId=id`    | Yes | Filter ratings by book |
+| `GET`    | `/api/rating/:id`                | Yes | Get a specific rating |
+| `PATCH`  | `/api/rating/:id`                | Yes | Update a rating |
+| `DELETE` | `/api/rating/:id`                | Yes | Delete a rating |
+
+**Example — Create a rating:**
+```json
+POST /api/rating
+{
+  "googleBookId": "zyTCAlFPjgYC",
+  "userId": 1,
+  "score": 5,
+  "comment": "A timeless classic.",
+  "status": "finished"
+}
+```
+
+The `googleBookId` is validated against the Google Books API before saving. Read responses include enriched book data.
+
+**Available status values:**
+
+| Value | Description |
+|-------|-------------|
+| `not_read` | Not yet read |
+| `reading` | Currently reading |
+| `finished` | Finished |
+
+---
+
+## Project structure
+
+```
+src/
+├── auth/               # JWT authentication (login, refresh, guard)
+├── books/              # Google Books API integration
+│   ├── dto/
+│   ├── books.controller.ts
+│   ├── books.module.ts
+│   └── google-books.service.ts
+├── rating/             # Book ratings
+│   ├── dto/
+│   ├── entities/
+│   ├── rating.controller.ts
+│   ├── rating.module.ts
+│   ├── rating.service.ts
+│   └── status.enum.ts
+├── users/              # User CRUD
+├── app.module.ts
+└── main.ts
+```
+
+---
+
+## Tests
 
 ```bash
-# unit tests
-$ npm run test
+# Unit tests
+npm run test
 
-# e2e tests
-$ npm run test:e2e
+# Test coverage
+npm run test:cov
 
-# test coverage
-$ npm run test:cov
+# End-to-end tests
+npm run test:e2e
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+---
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+MIT

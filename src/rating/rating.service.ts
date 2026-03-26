@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateRatingDto } from './dto/create-rating.dto';
@@ -14,11 +14,15 @@ export class RatingService {
     private readonly googleBooksService: GoogleBooksService,
   ) {}
 
-  async create(createRatingDto: CreateRatingDto) {
+  async create(createRatingDto: CreateRatingDto, currentUser: any) {
     // Validate that the book exists on Google Books
     await this.googleBooksService.getBookById(createRatingDto.googleBookId);
 
-    const rating = this.ratingRepository.create(createRatingDto);
+    // Force the userId to be the authenticated user's ID
+    const rating = this.ratingRepository.create({
+      ...createRatingDto,
+      userId: currentUser.sub,
+    });
     return this.ratingRepository.save(rating);
   }
 
@@ -52,7 +56,7 @@ export class RatingService {
     });
 
     if (!rating) {
-      throw new NotFoundException(`Rating #${id} não encontrado`);
+      throw new NotFoundException(`Rating #${id} not found`);
     }
 
     try {
@@ -63,12 +67,14 @@ export class RatingService {
     }
   }
 
-  async update(id: number, updateRatingDto: UpdateRatingDto) {
+  async update(id: number, updateRatingDto: UpdateRatingDto, currentUser: any) {
     const rating = await this.ratingRepository.findOne({ where: { id } });
 
     if (!rating) {
-      throw new NotFoundException(`Rating #${id} não encontrado`);
+      throw new NotFoundException(`Rating #${id} not found`);
     }
+
+    this.checkOwnershipOrAdmin(rating, currentUser);
 
     if (updateRatingDto.googleBookId) {
       await this.googleBooksService.getBookById(updateRatingDto.googleBookId);
@@ -78,13 +84,24 @@ export class RatingService {
     return this.ratingRepository.save(rating);
   }
 
-  async remove(id: number) {
+  async remove(id: number, currentUser: any) {
     const rating = await this.ratingRepository.findOne({ where: { id } });
 
     if (!rating) {
-      throw new NotFoundException(`Rating #${id} não encontrado`);
+      throw new NotFoundException(`Rating #${id} not found`);
     }
 
+    this.checkOwnershipOrAdmin(rating, currentUser);
+
     return this.ratingRepository.remove(rating);
+  }
+
+  private checkOwnershipOrAdmin(rating: Rating, currentUser: any) {
+    if (currentUser.isAdmin) {
+      return;
+    }
+    if (rating.userId !== currentUser.sub) {
+      throw new ForbiddenException('You can only modify your own ratings');
+    }
   }
 }
