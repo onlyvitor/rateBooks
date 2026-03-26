@@ -22,7 +22,7 @@ A REST API for rating books, integrated with the **Google Books API**. Authentic
 
 ```bash
 git clone <repo-url>
-cd rate-everithing
+cd rateBooks
 npm install
 ```
 
