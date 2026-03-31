@@ -7,22 +7,44 @@ import { BookResponseDto } from './dto/book-response.dto';
 export class GoogleBooksService {
   private readonly baseUrl = 'https://www.googleapis.com/books/v1/volumes';
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(private readonly httpService: HttpService) { }
 
   async searchBooks(query: string): Promise<BookResponseDto[]> {
     try {
-      const response = await firstValueFrom(
-        this.httpService.get(this.baseUrl, {
-          params: { q: query, maxResults: 20 },
-        }),
-      );
+      const params: any = {
+        q: query,
+        maxResults: 20,
+      };
+
+      if (process.env.GOOGLE_BOOKS_API_KEY) {
+        params.key = process.env.GOOGLE_BOOKS_API_KEY;
+      }
+
+      let response;
+      try {
+        response = await firstValueFrom(
+          this.httpService.get(this.baseUrl, { params }),
+        );
+      } catch (error: any) {
+        // Try fallback without the API key if it's forbidden/blocked
+        if (error.response?.status === 403 && params.key) {
+          console.warn('Google Books API key is blocked or invalid. Falling back to public quota.');
+          delete params.key;
+          response = await firstValueFrom(
+            this.httpService.get(this.baseUrl, { params }),
+          );
+        } else {
+          throw error;
+        }
+      }
 
       if (!response.data.items) {
         return [];
       }
 
       return response.data.items.map((item: any) => this.mapToBookResponse(item));
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Google Books API Error details:', error.response?.data || error.message);
       throw new HttpException(
         'Erro ao buscar livros na Google Books API',
         HttpStatus.BAD_GATEWAY,
